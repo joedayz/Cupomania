@@ -1,4 +1,0 @@
-#set up properties
-management:
-    application:
-        datasource: mysql
