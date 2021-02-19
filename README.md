@@ -1,2 +1,0 @@
-# Cupomania
-Demo Cupones
