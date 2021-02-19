@@ -1,0 +1,53 @@
+#set up properties
+management:
+  security:
+    enabled: false
+  endpoint:
+    restart:
+      enabled: true
+spring:
+  profiles:
+    active: ${PROFILE}
+  application:
+    name: cupones-app
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${RDS_HOSTNAME:127.0.0.1}:${RDS_PORT:3306}/${RDS_DB_NAME:marketplace}?createDatabaseIfNotExist=true
+    password: ${SECRETS_PASSWORD:tpm1234}
+    username: ${SECRETS_USER:james}
+    schema: classpath:/db/mysql/schema.sql
+    data: classpath:/db/mysql/data.sql
+    initialization-mode: always
+
+# JPA
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+# KAFKA
+
+  kafka:
+    bootstrap-servers: tricycle-01.srvs.cloudkafka.com:9094,tricycle-02.srvs.cloudkafka.com:9094,tricycle-03.srvs.cloudkafka.com:9094
+    properties:
+      security:
+        protocol: SASL_SSL
+      sasl:
+        mechanism: SCRAM-SHA-256
+        jaas:
+          config: org.apache.kafka.common.security.scram.ScramLoginModule required username="364o5nuj" password="3WsaJEOq7eQDf1we6ZcjisyoPJIZnWEo";
+    consumer:
+      group-id: 364o5nuj-consumers
+
+# TOPICS
+
+cupones:
+  consulta:
+    topic:  364o5nuj-consulta
+  respuesta:
+    topic:  364o5nuj-respuesta
+
+# Logging
+logging:
+  level:
+    org:
+      springframework: INFO

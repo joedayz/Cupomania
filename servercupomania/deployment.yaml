@@ -1,0 +1,81 @@
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cupones-app
+  name: cupones-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cupones-app
+  template:
+    metadata:
+      labels:
+        app: cupones-app
+    spec:
+      containers:
+        - name: cupones-app
+          image: gcr.io/inkafarma-proy3/cupones-app:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SECRETS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-user-credentials
+                  key: username
+            - name: SECRETS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-user-credentials
+                  key: password
+            - name: CONNECTION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mysqldb
+                  key: connection-name
+            - name: PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: mysqldb
+                  key: project-id
+            - name: PROFILE
+              valueFrom:
+                configMapKeyRef:
+                  name: mysqldb
+                  key: profile
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command: ["/cloud_sql_proxy", "-instances=inkafarma-proy3:us-central1:marketplace=tcp:3306", "-credential_file=/secrets/cloudsql/credentials.json"]
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: secrets-volume
+          secret:
+            secretName: cloudsql-proxy-credentials
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: cupones-app
+data:
+  database: marketplace
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cupones-app
+spec:
+  selector:
+    app: cupones-app
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: LoadBalancer
